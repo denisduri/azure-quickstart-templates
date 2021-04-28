@@ -20,7 +20,8 @@
       "defaultValue": "premium",
       "allowedValues": [
         "standard",
-        "premium"
+        "premium",
+        "trial"
       ],
       "metadata": {
         "description": "The pricing tier of workspace."
