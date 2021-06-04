@@ -17,10 +17,11 @@
     },
     "pricingTier": {
       "type": "string",
-      "defaultValue": "premium",
+      "defaultValue": "trial",
       "allowedValues": [
         "standard",
-        "premium"
+        "premium",
+        "trial"
       ],
       "metadata": {
         "description": "The pricing tier of workspace."
