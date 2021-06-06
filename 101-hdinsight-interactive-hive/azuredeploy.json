@@ -16,7 +16,7 @@
     },
     "clusterLoginPassword": {
       "type": "securestring",
-      "minLength": 10,      
+      "minLength": 10,
       "metadata": {
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character except (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
       }
@@ -30,7 +30,7 @@
     "sshPassword": {
       "type": "securestring",
       "minLength": 6,
-      "maxLength": 72,      
+      "maxLength": 72,
       "metadata": {
         "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name"
       }
@@ -42,9 +42,9 @@
         "description": "Location for all resources."
       }
     },
-      "HeadNodeVirtualMachineSize": {
+    "HeadNodeVirtualMachineSize": {
       "type": "string",
-      "defaultValue": "Standard_E8_v3",
+      "defaultValue": "Standard_A4_v2",
       "allowedValues": [
         "Standard_A4_v2",
         "Standard_A8_v2",
@@ -62,7 +62,7 @@
     },
     "WorkerNodeVirtualMachineSize": {
       "type": "string",
-      "defaultValue": "Standard_E16_v3",
+      "defaultValue": "Standard_A4_v2",
       "allowedValues": [
         "Standard_A4_v2",
         "Standard_A8_v2",
@@ -77,29 +77,11 @@
       "metadata": {
         "description": "This is the worerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
       }
-    },
-    "ZookeeperNodeVirtualMachineSize": {
-      "type": "string",
-      "defaultValue": "Standard_E4_v3",
-      "allowedValues": [
-        "Standard_A4_v2",
-        "Standard_A8_v2",
-        "Standard_E2_v3",
-        "Standard_E4_v3",
-        "Standard_E8_v3",
-        "Standard_E16_v3",
-        "Standard_E20_v3",
-        "Standard_E32_v3",
-        "Standard_E48_v3"
-      ],
-      "metadata": {
-        "description": "This is the worerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
-      }
-    }            
+    }
   },
   "variables": {
     "defaultStorageAccount": {
-      "name": "[uniqueString(resourceGroup().id)]",
+      "name": "[concat('storage', uniqueString(resourceGroup().id))]",
       "type": "Standard_LRS"
     }
   },
@@ -112,7 +94,7 @@
       "sku": {
         "name": "[variables('defaultStorageAccount').type]"
       },
-      "kind": "StorageV2",
+      "kind": "Storage",
       "properties": {}
     },
     {
@@ -121,14 +103,15 @@
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name)]"
+        "[resourceId('Microsoft.Storage/storageAccounts',variables('defaultStorageAccount').name)]"
       ],
+
       "properties": {
         "clusterVersion": "4.0",
         "osType": "Linux",
         "tier": "Standard",
         "clusterDefinition": {
-          "kind": "interactivehive",
+          "kind": "spark",
           "configurations": {
             "gateway": {
               "restAuthCredential.isEnabled": true,
@@ -140,7 +123,7 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name)).primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
               "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
@@ -150,11 +133,12 @@
         "computeProfile": {
           "roles": [
             {
-              "name": "headnode",
-              "minInstanceCount": 1,
+              "autoscale": null,
+			  "name": "headnode",
+			  "minInstanceCount": 1,
               "targetInstanceCount": 2,
               "hardwareProfile": {
-              "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
+                "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -164,25 +148,11 @@
               }
             },
             {
-              "name": "workernode",
-              "minInstanceCount": 1,
+              "autoscale": null,
+			  "name": "workernode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
                 "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
-              },
-              "osProfile": {
-                "linuxOperatingSystemProfile": {
-                  "username": "[parameters('sshUserName')]",
-                  "password": "[parameters('sshPassword')]"
-                }
-              }
-            },
-            {
-              "name": "zookeepernode",
-              "minInstanceCount": 1,
-              "targetInstanceCount": 3,
-              "hardwareProfile": {
-                "vmSize": "[parameters('ZookeeperNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -203,7 +173,7 @@
     },
     "cluster": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters', parameters('clusterName')))]"
     }
   }
 }
