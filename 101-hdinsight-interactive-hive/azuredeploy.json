@@ -133,9 +133,7 @@
         "computeProfile": {
           "roles": [
             {
-              "autoscale": null,
-			  "name": "headnode",
-			  "minInstanceCount": 1,
+	      "name": "headnode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
                 "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
@@ -148,8 +146,7 @@
               }
             },
             {
-              "autoscale": null,
-			  "name": "workernode",
+   	      "name": "workernode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
                 "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
